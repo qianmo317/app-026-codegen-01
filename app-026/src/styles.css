@@ -290,9 +290,43 @@ input[type='number'] { width: 56px; padding: 2px 4px; }
   body { background: #fff; color: #000; }
 }
 
+/* ============ 排戏计划 ============ */
+.save-state { font-size: 12px; color: var(--muted); align-self: center; min-width: 48px; text-align: right; }
+.plan-fields { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.plan-field { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; }
+.plan-field input[type='number'] { width: 80px; min-width: 80px; flex: none; }
+.plan-summary { display: flex; gap: 18px; flex-wrap: wrap; margin-top: 14px; font-size: 14px; color: var(--muted); }
+.plan-summary b { color: var(--fg); font-variant-numeric: tabular-nums; }
+.plan-total b { color: var(--accent); font-size: 16px; }
+.plan-table-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
+.plan-table-head h2 { margin: 0; }
+.table-wrap { overflow-x: auto; }
+.plan-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.plan-table th, .plan-table td { padding: 8px 10px; border-bottom: 1px solid var(--border); text-align: left; white-space: nowrap; }
+.plan-table th { color: var(--muted); font-weight: 500; font-size: 12px; }
+.plan-table td.num, .plan-table th.num { text-align: right; font-variant-numeric: tabular-nums; }
+.plan-table td.strong { font-weight: 700; color: var(--accent); }
+.plan-table tr[data-custom='1'] { background: var(--hl); }
+.plan-table .seg-name { white-space: normal; min-width: 120px; }
+.plan-dur { display: inline-flex; align-items: center; gap: 8px; justify-content: flex-end; }
+.plan-table .plan-dur-input { width: 76px; flex: none; }
+.plan-dur-clock { min-width: 52px; text-align: right; }
+.session-list { display: flex; flex-direction: column; gap: 10px; }
+.session-card { display: flex; align-items: center; gap: 14px; border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; }
+.session-card:nth-child(1) { border-left: 3px solid var(--accent); }
+.session-no { font-weight: 700; width: 64px; flex: none; }
+.session-body { flex: 1; min-width: 0; }
+.session-range { font-size: 15px; }
+.session-detail { font-size: 13px; margin-top: 3px; }
+.session-detail b { color: var(--accent); }
+.session-time { font-size: 17px; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--accent); flex: none; }
+.tag { display: inline-block; margin-left: 8px; font-size: 11px; font-weight: 400; color: var(--accent); border: 1px solid var(--hl-border); border-radius: 6px; padding: 0 6px; vertical-align: middle; }
+.plan-tip { font-size: 13px; }
+
 @media (max-width: 720px) {
   .line-row { align-items: flex-start; }
   .line-note { width: 100%; }
   .remote-digits { grid-template-columns: repeat(5, 1fr); }
   .prompt-body.dual { grid-template-columns: 1fr; }
+  .session-card { flex-wrap: wrap; }
 }

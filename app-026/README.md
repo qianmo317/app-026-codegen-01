@@ -1,7 +1,7 @@
 # 戏曲演出提词器 · Opera Teleprompter
 
 > 纯前端 Web 应用｜技术栈：**React 18 + TypeScript + Vite**（手写 CSS，不引入 UI 库）
-> 状态：**已完成并通过全部验收**（单元测试 41 例、E2E 6 组、浏览器点测、Docker 容器化）
+> 状态：**已完成并通过全部验收**（单元测试 64 例、E2E 7 组、浏览器点测、Docker 容器化）
 
 ## 1. 项目简介
 
@@ -32,6 +32,7 @@
 | 段落与循环 | 单段循环播放（反复练一段）、段落间跳转（数字键 `1~9` 或遥控） |
 | 进场/过门标记 | 词句中插入【过门 N】【锣鼓】【停顿 N】，自动滚动遇到标记时**停留 N 秒再继续**（可跳过），显示剩余秒数 |
 | 标记与批注 | 句子加颜色标记（易错句 / 需加力 / 需拖腔）、批注；标记只对本人可见 |
+| 排戏计划 | 按设定念白速度（字/分钟）估算每句/每段用时（加句中停顿），累加整场总时长；计划表可导出 TXT/CSV；按每次排练时长上限自动切分，标出练到哪段第几句、下次从哪段第几句起；个别段可手工改写秒数，总时长与切分联动重算 |
 | 演出模式 | 全屏、控件 2.5 秒自动隐藏、防误触（锁定后点击无效，长按 2 秒带进度环解锁，`Esc` 也可）、屏幕常亮（Wake Lock） |
 | 主题 | 深色 / 浅色 / 高对比（黑底黄字） |
 
@@ -80,6 +81,7 @@ docker compose down                  # 停止并清理
 ```
 /                  剧目列表（新建、粘贴导入、示例导入、模板实例化、删除）
 /script/:id        文稿编辑（粘贴替换/追加、行编辑、标记、过门标记秒数、批注、分段/拆分/重命名/循环勾选、提醒卡、存模板）
+/plan/:id          排戏计划（用时估算、整场总时长、计划表导出 TXT/CSV、按排练时长上限切分、段用时手工改写联动重算）
 /prompt/:id        排练模式（自动滚动、循环、暂停、调速、跳段、双人分栏、遥控、提醒卡、主题切换）
 /prompt/:id/stage  演出模式（全屏大字、控件自动隐藏、锁定防误触）
 /remotes           遥控器（输入提词端配对码连接）
@@ -98,6 +100,16 @@ docker compose down                  # 停止并清理
 ```
 
 标记语法：`【过门N】`（或 `【过门:N】`）、`【停顿N】`、`【锣鼓】`、`【注:xxx】`（本人可见批注性提示）。角色前缀不超过 6 个字。内置示例见 `app-026/public/samples/`（`opera-demo.txt`、`speech-demo.txt`）。
+
+### 排戏计划（`/plan/:id`，首页/编辑页点「排戏计划」进入）
+
+排戏前估算一整场念下来多久、一次排练能过到哪：
+
+- **用时估算**：每句用时 = 句中字数 ÷ 念白速度（字/分钟，默认 120）× 60 + 句中停顿（`【过门N】`/`【锣鼓】`/`【停顿N】` 秒数之和，`【注:…】` 不停留）；每段用时为各句之和，再按段序累加出整场总时长。字数按汉字逐字计、连续英文/数字串按词计，标点与空白不计。
+- **计划表**：列出段序、段名、句数、字数、停顿、估算用时、本段用时、累计用时；一键**导出 TXT / CSV**（CSV 带 BOM，Excel 打开中文不乱码）。
+- **排练切分**：设定「每次排练时长上限（分钟）」后，按顺序贪心装箱把整场切成若干次；卡片标明每次起止（第 X 段第 Y 句 → …）、本次时长、**练到哪一段第几句结束、下一次从哪一段第几句起**。某段本身比一次还长时自动在段内按句拆，不丢内容、不产生死循环。
+- **手工改写**：某段实际排下来跟估算不符，直接在「本段用时」填秒数（清空即恢复估算）；该段各句按比例摊派，**整场总时长、累计列、排练切分立即跟着重算**。
+- 速度、上限、改写值随剧目存 IndexedDB，刷新不丢；段删除后悬挂改写自动清理。
 
 ### 默认快捷键（可在设置页自定义并持久化，`1~9` 跳段固定不可改）
 
@@ -150,8 +162,8 @@ docker compose down                  # 停止并清理
 
 ### 测试组成
 
-- **单元测试（vitest，41 例）**：滚动引擎（帧率一致性、停留精度、跳过、循环、seek 重触发）、自动字号二分、解析器、虚拟列表窗口、键位映射（损坏存储回退）、IndexedDB 仓库、Wake Lock 守卫、遥控消息协议。
-- **E2E（Playwright，6 组）**：全流程旅程（粘贴 → 标记批注 → 排练停留/跳过/调速/跳段/循环 → 演出锁定长按 → 持久化）、设置持久化与键位自定义、自动字号与虚拟列表、5000 行性能、断网可用、双端遥控。
+- **单元测试（vitest，64 例）**：滚动引擎（帧率一致性、停留精度、跳过、循环、seek 重触发）、自动字号二分、解析器、虚拟列表窗口、键位映射（损坏存储回退）、IndexedDB 仓库、Wake Lock 守卫、遥控消息协议、**排戏计划（字数统计、句/段用时与累计、手工改写联动、贪心切分与段内按句拆、单句超限不死循环、TXT/CSV 导出）**。
+- **E2E（Playwright，7 组）**：全流程旅程（粘贴 → 标记批注 → 排练停留/跳过/调速/跳段/循环 → 演出锁定长按 → 持久化）、设置持久化与键位自定义、自动字号与虚拟列表、5000 行性能、断网可用、双端遥控、**排戏计划（估算/切分/改写重算/持久化/导出下载）**。
 - **浏览器点测**：首页/编辑/排练/演出/设置/打印全页面实际点击验证，Console 无报错。
 
 ### 测试中发现并修复的真实缺陷
@@ -188,11 +200,11 @@ docker compose down                  # 停止并清理
     ├── .dockerignore / .gitignore
     ├── public/samples/           # 示例剧目（opera-demo.txt、speech-demo.txt）
     ├── src/
-    │   ├── engine/               # scroller(滚动引擎) / autofit / parse / cues / virtual / keys / segments / remote / wakelock
+    │   ├── engine/               # scroller(滚动引擎) / autofit / parse / cues / virtual / keys / segments / remote / wakelock / plan(排戏计划估算与切分)
     │   ├── storage/              # db(IndexedDB 封装) / repo(仓库与默认设置)
     │   ├── state/hooks.ts        # useSettings / useScript / usePractice / useEngine 等
     │   ├── components/           # PromptCanvas（提词画布核心渲染）
-    │   ├── pages/                # Home / ScriptEditor / Prompt / Stage / Remotes / Settings / Print
+    │   ├── pages/                # Home / ScriptEditor / Plan(排戏计划) / Prompt / Stage / Remotes / Settings / Print
     │   ├── router.tsx / App.tsx / styles.css / types.ts
     ├── tests/unit/               # vitest 单元测试
     └── tests/e2e/                # Playwright E2E
@@ -209,7 +221,8 @@ type Cue = { id: string; kind: 'pause'|'interlude'|'drum'|'note'; seconds?: numb
 type Line = { id: string; role?: string; text: string; cues: Cue[]; marks: string[]; note?: string };
 type Segment = { id: string; title: string; lineIds: string[]; loop?: boolean };
 type Script = { id: string; title: string; troupe?: string; lines: Line[]; segments: Segment[];
-                style: 'opera'|'speech'; updatedAt: number };
+                style: 'opera'|'speech'; updatedAt: number;
+                plan?: { charsPerMinute: number; sessionMinutes: number; segmentCustomSeconds: Record<string, number> } };
 type PromptSettings = { fontSizePx: number; autoFit: boolean; autoScroll: boolean; speedPxPerSec: number;
                         theme: 'dark'|'light'|'highContrast'; holdOnCue: boolean; lockStage: boolean };
 ```

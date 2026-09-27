@@ -6,9 +6,9 @@
 ## 1. 测试体系总览
 
 ```
-单元测试 (vitest, 41 例)      → 引擎/解析/存储/协议的确定性断言
+单元测试 (vitest, 64 例)      → 引擎/解析/存储/协议的确定性断言
         ↓
-E2E (Playwright, 6 组 spec)   → 真实浏览器全旅程与性能
+E2E (Playwright, 7 组 spec)   → 真实浏览器全旅程与性能
         ↓
 浏览器点测 (人工代理, 7 项)    → 视觉/交互/Console 巡检
         ↓
@@ -18,14 +18,14 @@ Docker 自检                   → 镜像体积/healthz/SPA 回退/容器健康
 运行方式（均在 `app-026/`）：
 
 ```bash
-npm test                          # 单元测试，一次性 41 例
+npm test                          # 单元测试，一次性 64 例
 npx vitest                        # watch 模式
 npm run e2e                       # 全部 E2E（webServer 自动起 preview :4173）
 npx playwright test tests/e2e/journey.spec.ts    # 单个 spec
 npx playwright test --headed      # 有头模式观察执行
 ```
 
-## 2. 单元测试（tests/unit/，41 例全绿）
+## 2. 单元测试（tests/unit/，64 例全绿）
 
 | 文件 | 环境 | 覆盖点 |
 |---|---|---|
@@ -37,10 +37,11 @@ npx playwright test --headed      # 有头模式观察执行
 | `db.test.ts` | node | fake-indexeddb：四 store 建库、get/put/delete/getAll；设置保存读取往返（含 savedAt 剥离与默认值合并） |
 | `wakelock.test.ts` | jsdom | WakeLockGuard 获取/释放**配对**（防泄漏）；不支持环境静默降级 |
 | `remote.test.ts` | node | 4 位配对码生成；`isRemoteCommand`/`isRemoteStatus` 类型守卫拒绝非法消息；合法消息往返 |
+| `plan.test.ts` | node | 字数统计（汉字/英文词/标点不计）；句用时 = 字数÷速度×60+停顿（过门/锣鼓/停顿/注）；段用时与整场累计；手工改写取值与恢复（含改 0 秒）；贪心切分、整段恰好装满不拆、段内按句拆、单句超限强制带走不死循环、改写后切分重算、各次秒数合计守恒；`formatClock`；TXT/CSV（BOM、表头、每行段序）；空文稿/非法速度兜底 |
 
 工具：`tests/unit/setup.ts` 加载 fake-indexeddb（auto 注册），jsdom 环境文件按文件头注释 `// @vitest-environment jsdom` 切换。
 
-## 3. E2E 测试（tests/e2e/，6 组全绿）
+## 3. E2E 测试（tests/e2e/，7 组全绿）
 
 | Spec | 场景 |
 |---|---|
@@ -50,6 +51,7 @@ npx playwright test --headed      # 有头模式观察执行
 | `perf.spec.ts` | 5000 行文稿滚动 ≥ 55fps（rAF 计时采样，retries=2） |
 | `offline.spec.ts` | 断网后所有操作纯本地：SPA 内跳转、编辑保存、排练播放（客户端路由不 reload） |
 | `remote.spec.ts` | 双 context：提词端显示 4 位配对码（字母数字混合）→ 遥控端连接 → 播放/暂停/调速/跳段指令生效 + 状态回报 |
+| `plan.spec.ts` | 设速度后整场/累计用时正确；设排练上限切分（起止、本次时长、下次起点）；手工改写段秒数后总时长与切分立即重算、重置恢复；参数/改写刷新持久化；TXT/CSV 下载（文件名与正文断言） |
 
 `playwright.config.ts`：`workers: 1`（计时断言稳定性）、baseURL `:4173`、webServer 自动起 `vite preview`（`reuseExistingServer: true`）。
 

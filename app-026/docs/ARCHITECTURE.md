@@ -9,8 +9,8 @@
 
 ```
 ┌─────────────────────────────────────────────────────┐
-│  pages/   Home · ScriptEditor · Prompt · Stage ·    │
-│           Remotes · Settings · Print                │  ← 页面（路由 + 交互编排）
+│  pages/   Home · ScriptEditor · Plan · Prompt ·     │
+│           Stage · Remotes · Settings · Print        │  ← 页面（路由 + 交互编排）
 ├─────────────────────────────────────────────────────┤
 │  components/PromptCanvas                            │  ← 提词画布（渲染核心）
 ├─────────────────────────────────────────────────────┤
@@ -22,7 +22,7 @@
 │  parse · cues ·      │  repo（仓库 + 默认设置 +      │
 │  virtual · keys ·    │     设置双写持久化）           │
 │  segments · remote · │                              │
-│  wakelock            │                              │
+│  wakelock · plan     │                              │
 ├──────────────────────┴──────────────────────────────┤
 │  types.ts（数据模型） · router.tsx（手写 history 路由）│
 └─────────────────────────────────────────────────────┘
@@ -70,14 +70,21 @@
 - 消息双通道：`RemoteCommand`（遥控端→提词端指令）与 `RemoteStatus`（提词端→遥控端状态回报，800ms 节流）。
 - `isRemoteCommand` / `isRemoteStatus` 类型守卫隔离非法消息；遥控端 3 秒未收到 status 判离线。
 
-### 2.7 存储 `src/storage/db.ts` + `repo.ts`
+### 2.7 排戏计划 `src/engine/plan.ts`（无 UI 纯函数）
+
+- **估算**：`spokenCount` 按汉字逐字、连续拉丁/数字串按词计数（标点空白不计）；每句 `speakSeconds = 字数 ÷ charsPerMinute × 60`，`pauseSeconds` 复用 cues 的过门/锣鼓/停顿秒数（注不停留）；段用时为句用时之和，再按段序累加 `cumulativeSeconds`。
+- **手工改写**：`segmentCustomSeconds[段id]` 存在时整段取改写值；`scaleLines` 按原句用时比例摊到各句（基础为 0 则按句均分），保证段内按句切分仍可定位。清空 key 即恢复估算，总时长/累计/切分全部派生重算。
+- **切分**：`splitSessions` 顺序贪心装箱，段装不下就新开一次；单段超 cap 时在段内按句断开并标 `truncated`；单句超 cap 强制带走一句（防死循环）；空段不占排练次。每次产出 `startSegment/startLine`、`endSegment/endLine`、`nextStart`（最后一次为 null）。
+- **导出**：`planToText`（等宽文本表）/ `planToCSV`（带 BOM）；`downloadPlanFile` 用 Blob + `a[download]` 触发下载。配置存 `Script.plan`（`PlanConfig`），旧剧本经 `normalizePlanConfig` 兜底，删段后 `pruneOverrides` 清悬挂 key。
+
+### 2.8 存储 `src/storage/db.ts` + `repo.ts`
 
 - IndexedDB v1，四个 store：`scripts` / `templates` / `settings` / `practice`（keyPath `id`）。
 - `repo.ts` 暴露领域仓库函数；**设置采用双写持久化**（见 §3 设计决策 D4）：
   - 写：localStorage **同步**直写（含 `savedAt` 时间戳）+ IndexedDB 异步落盘；
   - 读：两侧各取一份，`savedAt` 较新者胜，用默认值合并补齐缺省字段。
 
-### 2.8 状态编排 `src/state/hooks.ts`
+### 2.9 状态编排 `src/state/hooks.ts`
 
 | Hook | 职责 |
 |---|---|
@@ -87,7 +94,7 @@
 | `useEngine` | 创建引擎 + `attachDriver(rAF)`；settings 变化同步到引擎（速度/字号布局等） |
 | `applyTheme` | 把主题写入 `<html data-theme>` |
 
-### 2.9 渲染核心 `src/components/PromptCanvas.tsx`
+### 2.10 渲染核心 `src/components/PromptCanvas.tsx`
 
 - ResizeObserver 跟踪视口；`autoFit` 开时按容器自适应字号，否则用手动值；`lineHeight = round(fontSize × 1.55)`。
 - **性能关键**：滚动位移每帧**直写**容器 `transform`（不经 React）；当前行等离散 UI 状态变化才 `setState` 走 React 渲染。
@@ -95,12 +102,13 @@
 - 手势：单指拖拽（播放/停留中先暂停再 nudge）、双击播放暂停、长按 600ms 回调（演出页用）。
 - 行 DOM 带可测属性：`data-line-index`（原始行号）、`data-current`、`data-marks`（空格分隔）、练习徽标 `practice-badge`、`.prompt-content[data-fontsize]`。
 
-### 2.10 页面 `src/pages/`
+### 2.11 页面 `src/pages/`
 
 | 页面 | 路由 | 职责 |
 |---|---|---|
 | Home | `/` | 剧目列表/新建/粘贴导入/示例导入（fetch `/samples/*.txt`）/模板实例化/删除 |
 | ScriptEditor | `/script/:id` | 粘贴替换/追加、行编辑与标记（hard/power/drag）、cue chips（秒数编辑）、批注、增删行、分段（✂ 拆分/重命名/循环勾选）、提醒卡、存模板 |
+| Plan | `/plan/:id` | 排戏计划：速度/排练上限参数、计划表（段序/段名/句数/每段用时/累计）、段用时手工改写、排练切分卡片、TXT/CSV 导出 |
 | Prompt | `/prompt/:id` | 排练：双引擎分栏（双人）、跳段（保播放状态 + 段循环标记自动续圈）、循环开关、调速、主题循环、全屏、提醒卡、遥控监听、**循环计时（见 §3 D5）** |
 | Stage | `/prompt/:id/stage` | 演出：Wake Lock 配对获取/释放、全屏、控件 2.5s 自动隐藏、锁定盾层（长按 2s SVG 进度环、Esc 解锁） |
 | Remotes | `/remotes` | 配对码输入、连接状态、遥控按钮（含数字跳段） |
@@ -113,6 +121,9 @@
 
 ```
 【编辑流】编辑器 mutate → useScript 防抖 400ms → repo.saveScript(IDB) → '已保存' 提示
+
+【计划流】Plan 页改速度/上限/段改写 → mutate 写 Script.plan（同一防抖自动保存）
+                 ──→ buildPlan 纯函数派生：句/段用时 → 累计 → splitSessions 切分 → 表格与卡片重渲染；导出为 planToText/planToCSV 下载
 
 【播放流】rAF driver ──→ engine.tick(dt) ──→ pos 累加 / holding 倒计 / loop 回卷
                  └─→ PromptCanvas rAF：每帧直写 transform（位移）

@@ -9,6 +9,7 @@ import { Stage } from './pages/Stage'
 import { Remotes } from './pages/Remotes'
 import { Settings } from './pages/Settings'
 import { PrintView } from './pages/Print'
+import { Plan } from './pages/Plan'
 import type { PromptSettings } from './types'
 
 interface Ctx {
@@ -33,6 +34,7 @@ export default function App() {
   else if ((m = matchRoute(path, '/prompt/:id/stage'))) page = <Stage id={m.id} />
   else if ((m = matchRoute(path, '/prompt/:id'))) page = <Prompt id={m.id} />
   else if ((m = matchRoute(path, '/print/:id'))) page = <PrintView id={m.id} />
+  else if ((m = matchRoute(path, '/plan/:id'))) page = <Plan id={m.id} />
   else if ((m = matchRoute(path, '/remotes'))) page = <Remotes />
   else if ((m = matchRoute(path, '/settings'))) page = <Settings />
   else if (path === '/') page = <Home />
