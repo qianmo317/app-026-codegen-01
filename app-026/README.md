@@ -1,7 +1,7 @@
 # 戏曲演出提词器 · Opera Teleprompter
 
 > 纯前端 Web 应用｜技术栈：**React 18 + TypeScript + Vite**（手写 CSS，不引入 UI 库）
-> 状态：**已完成并通过全部验收**（单元测试 41 例、E2E 6 组、浏览器点测、Docker 容器化）
+> 状态：**已完成并通过全部验收**（单元测试 70 例、E2E 12 组、浏览器点测、Docker 容器化）
 
 ## 1. 项目简介
 
@@ -42,6 +42,7 @@
 - **提醒卡**：易错句单独抽成卡片，排练前速览。
 - **打印版**：大字唱词 + 标记 + 批注，供无设备场合。
 - **练习计数**：循环练习自动累计，当前行显示「本条已练 N 次」。
+- **排戏时长计划**：设定念白速度（字/分钟）后按句估算（念字用时 + 句中【停顿】【过门】【锣鼓】秒数），逐段累加整场总时长；给出段序/段名/句数/段用时/累计用时计划表，可导出 TXT/CSV。指定每次排练时长上限后自动切成若干次，标出每次练到哪一段结束、下次从那一段第几句起；个别段估不准可手工改写整段用时，总时长与切分立即重算。
 
 ## 3. 快速开始
 
@@ -81,6 +82,7 @@ docker compose down                  # 停止并清理
 /                  剧目列表（新建、粘贴导入、示例导入、模板实例化、删除）
 /script/:id        文稿编辑（粘贴替换/追加、行编辑、标记、过门标记秒数、批注、分段/拆分/重命名/循环勾选、提醒卡、存模板）
 /prompt/:id        排练模式（自动滚动、循环、暂停、调速、跳段、双人分栏、遥控、提醒卡、主题切换）
+/plan/:id          排戏时长计划（速度估算、计划表、手工改写、排练切分、TXT/CSV 导出）
 /prompt/:id/stage  演出模式（全屏大字、控件自动隐藏、锁定防误触）
 /remotes           遥控器（输入提词端配对码连接）
 /settings          字号、自动滚动、速度、过门停留、锁定舞台、主题、键位自定义、遥控配对码
@@ -150,8 +152,8 @@ docker compose down                  # 停止并清理
 
 ### 测试组成
 
-- **单元测试（vitest，41 例）**：滚动引擎（帧率一致性、停留精度、跳过、循环、seek 重触发）、自动字号二分、解析器、虚拟列表窗口、键位映射（损坏存储回退）、IndexedDB 仓库、Wake Lock 守卫、遥控消息协议。
-- **E2E（Playwright，6 组）**：全流程旅程（粘贴 → 标记批注 → 排练停留/跳过/调速/跳段/循环 → 演出锁定长按 → 持久化）、设置持久化与键位自定义、自动字号与虚拟列表、5000 行性能、断网可用、双端遥控。
+- **单元测试（vitest，70 例）**：滚动引擎（帧率一致性、停留精度、跳过、循环、seek 重触发）、自动字号二分、解析器、虚拟列表窗口、键位映射（损坏存储回退）、IndexedDB 仓库、Wake Lock 守卫、遥控消息协议、**时长估算（字数统计、句/段/整场累加、手工改写摊分与重算、按上限切分、导出 TXT/CSV 转义与下载）**。
+- **E2E（Playwright，12 组）**：全流程旅程（粘贴 → 标记批注 → 排练停留/跳过/调速/跳段/循环 → 演出锁定长按 → 持久化）、设置持久化与键位自定义、自动字号与虚拟列表、5000 行性能、断网可用、双端遥控、**排戏时长计划（计划表、改速度重算、手工改写联动切分、切分起止、TXT 导出、入口与持久化）**。
 - **浏览器点测**：首页/编辑/排练/演出/设置/打印全页面实际点击验证，Console 无报错。
 
 ### 测试中发现并修复的真实缺陷
@@ -188,11 +190,11 @@ docker compose down                  # 停止并清理
     ├── .dockerignore / .gitignore
     ├── public/samples/           # 示例剧目（opera-demo.txt、speech-demo.txt）
     ├── src/
-    │   ├── engine/               # scroller(滚动引擎) / autofit / parse / cues / virtual / keys / segments / remote / wakelock
+    │   ├── engine/               # scroller(滚动引擎) / autofit / parse / cues / virtual / keys / segments / remote / wakelock / timing(时长估算与排练切分) / export(TXT·CSV 导出)
     │   ├── storage/              # db(IndexedDB 封装) / repo(仓库与默认设置)
     │   ├── state/hooks.ts        # useSettings / useScript / usePractice / useEngine 等
     │   ├── components/           # PromptCanvas（提词画布核心渲染）
-    │   ├── pages/                # Home / ScriptEditor / Prompt / Stage / Remotes / Settings / Print
+    │   ├── pages/                # Home / ScriptEditor / Prompt / Stage / Remotes / Settings / Print / TimingPlan
     │   ├── router.tsx / App.tsx / styles.css / types.ts
     ├── tests/unit/               # vitest 单元测试
     └── tests/e2e/                # Playwright E2E

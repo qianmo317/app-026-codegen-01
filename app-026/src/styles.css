@@ -296,3 +296,55 @@ input[type='number'] { width: 56px; padding: 2px 4px; }
   .remote-digits { grid-template-columns: repeat(5, 1fr); }
   .prompt-body.dual { grid-template-columns: 1fr; }
 }
+
+/* ============ 排戏时长计划 ============ */
+.timing-params { align-items: center; margin-top: 0; }
+.timing-field { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; }
+.timing-field input[type='number'] { width: 76px; }
+.timing-total { display: inline-flex; align-items: baseline; gap: 8px; margin-left: auto; font-size: 15px; }
+.timing-total strong { font-size: 22px; font-variant-numeric: tabular-nums; color: var(--accent); }
+.timing-hint { margin: 10px 0 0; font-size: 13px; }
+
+.panel-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 10px; }
+.panel-head h2 { display: flex; align-items: center; gap: 6px; margin: 0; }
+
+.table-wrap { overflow-x: auto; }
+.timing-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.timing-table th, .timing-table td { padding: 8px 10px; border-bottom: 1px solid var(--border); text-align: left; vertical-align: middle; }
+.timing-table thead th { color: var(--muted); font-weight: 600; font-size: 13px; white-space: nowrap; }
+.timing-table .col-num, .timing-table .col-time { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.timing-table .col-seg { white-space: nowrap; width: 52px; }
+.timing-table .cell-title { font-weight: 600; }
+.timing-table .cell-text { max-width: 380px; }
+.timing-table tbody tr:hover { background: var(--hl); }
+.timing-table tbody tr.row-overridden { background: color-mix(in srgb, var(--accent) 8%, transparent); }
+.timing-table tbody tr.row-overridden td { color: inherit; }
+
+.seg-toggle {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 22px; height: 22px; margin-right: 2px; padding: 0;
+  background: transparent; color: var(--muted); border: none; cursor: pointer;
+}
+.seg-toggle:hover { color: var(--fg); }
+
+.badge { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: 12px; white-space: nowrap; }
+.badge-est { background: var(--hl); color: var(--muted); }
+.badge-manual { background: var(--accent); color: var(--bg); font-weight: 600; }
+.badge-warn { margin-left: 6px; background: var(--danger); color: #fff; }
+
+.icon-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 24px; height: 24px; margin-left: 4px; padding: 0;
+  background: transparent; color: var(--muted); border: 1px solid var(--border);
+  border-radius: 6px; cursor: pointer;
+}
+.icon-btn:hover { color: var(--fg); border-color: var(--accent); }
+
+.edit-time { display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; }
+.edit-time input[type='number'] { width: 56px; }
+
+.detail-row td { background: var(--bg); padding: 6px 10px 10px 40px; }
+.timing-table tbody tr.detail-row:hover td { background: var(--bg); }
+.line-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.line-table th, .line-table td { padding: 5px 8px; border-bottom: 1px dashed var(--border); }
+.line-table thead th { color: var(--muted); font-weight: 500; }

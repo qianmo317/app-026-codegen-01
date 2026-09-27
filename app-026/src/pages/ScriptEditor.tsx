@@ -6,7 +6,7 @@ import { makeCue, cueLabel } from '../engine/cues'
 import { MARK_DEFS, KIND_LABELS } from '../constants'
 import * as repo from '../storage/repo'
 import type { Cue, Line } from '../types'
-import { Play, Maximize, Printer, Save, Layers, StickyNote } from 'lucide-react'
+import { Play, Maximize, Printer, Save, Layers, StickyNote, Clock3 } from 'lucide-react'
 
 export function ScriptEditor({ id }: { id: string }) {
   const { script, mutate, saved, saveNow } = useScript(id)
@@ -154,6 +154,7 @@ export function ScriptEditor({ id }: { id: string }) {
           <button className="btn btn-ghost" onClick={() => setShowCards((v) => !v)}><StickyNote size={16} /> 提醒卡</button>
           <button className="btn btn-ghost" onClick={saveTemplate}><Layers size={16} /> 存模板</button>
           <Link className="btn btn-ghost" to={`/print/${script.id}`}><Printer size={16} /> 打印</Link>
+          <Link className="btn btn-ghost" to={`/plan/${script.id}`}><Clock3 size={16} /> 排戏计划</Link>
           <Link className="btn" to={`/prompt/${script.id}`}><Play size={16} /> 排练</Link>
           <Link className="btn" to={`/prompt/${script.id}/stage`}><Maximize size={16} /> 演出</Link>
         </div>

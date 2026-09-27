@@ -4,7 +4,7 @@ import { useAsync } from '../state/hooks'
 import * as repo from '../storage/repo'
 import { buildScriptFromText } from '../engine/parse'
 import type { Script, ScriptStyle } from '../types'
-import { FileText, Pencil, Play, Printer, Trash2, Maximize, Upload, Download } from 'lucide-react'
+import { FileText, Pencil, Play, Printer, Trash2, Maximize, Upload, Download, Clock3 } from 'lucide-react'
 
 export function Home() {
   const { data: scripts, reload } = useAsync(repo.listScripts, [])
@@ -105,6 +105,7 @@ export function Home() {
                 <Link className="btn btn-small" to={`/prompt/${s.id}`}><Play size={14} /> 排练</Link>
                 <Link className="btn btn-small" to={`/prompt/${s.id}/stage`}><Maximize size={14} /> 演出</Link>
                 <Link className="btn btn-small btn-ghost" to={`/print/${s.id}`}><Printer size={14} /> 打印</Link>
+                <Link className="btn btn-small btn-ghost" to={`/plan/${s.id}`}><Clock3 size={14} /> 排戏计划</Link>
                 <button className="btn btn-small btn-danger" data-testid="btn-delete" onClick={() => del(s.id)}><Trash2 size={14} /></button>
               </div>
             </div>
